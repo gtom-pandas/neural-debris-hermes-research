@@ -50,6 +50,8 @@ overfitting blindly to the public leaderboard. The workflow prioritizes:
 - [reports/](reports/): audits, training plans and no-submit conclusions.
 - [handoffs/](handoffs/): prompts/runbooks for Codex, Hermes and phone-based
   operation.
+- [kaggle_kernels/neural_debris/](kaggle_kernels/neural_debris/): Kaggle CLI
+  exports of the competition kernels and metadata.
 - [controlled_unlearn_beta005_preserve_001.ipynb](controlled_unlearn_beta005_preserve_001.ipynb):
   prepared no-submit notebook candidate.
 

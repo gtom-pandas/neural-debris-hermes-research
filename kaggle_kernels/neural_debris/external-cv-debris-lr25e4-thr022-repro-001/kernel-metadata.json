@@ -1,0 +1,23 @@
+{
+  "id": "ttgrcgrc/external-cv-debris-lr25e4-thr022-repro-001",
+  "id_no": 124246586,
+  "title": "external_cv_debris_lr25e4_thr022_repro_001",
+  "code_file": "external-cv-debris-lr25e4-thr022-repro-001.py",
+  "language": "python",
+  "kernel_type": "script",
+  "is_private": true,
+  "enable_gpu": true,
+  "enable_tpu": false,
+  "enable_internet": true,
+  "keywords": [
+    "gpu"
+  ],
+  "dataset_sources": [],
+  "kernel_sources": [],
+  "competition_sources": [
+    "neural-debris-removal-in-streak-detection-models"
+  ],
+  "model_sources": [],
+  "docker_image": "gcr.io/kaggle-private-byod/python@sha256:57e612b484cf3df5026ee4dcc3cb176974b22b2bc0937fb1e16132a8be4cb13c",
+  "machine_shape": "NvidiaTeslaT4"
+}

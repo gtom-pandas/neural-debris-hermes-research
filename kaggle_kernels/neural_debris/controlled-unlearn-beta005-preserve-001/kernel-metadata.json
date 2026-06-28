@@ -1,0 +1,30 @@
+{
+  "id": "ttgrcgrc/controlled-unlearn-beta005-preserve-001",
+  "id_no": 124079838,
+  "title": "controlled unlearn beta005 preserve 001",
+  "code_file": "controlled-unlearn-beta005-preserve-001.py",
+  "language": "python",
+  "kernel_type": "script",
+  "is_private": true,
+  "enable_gpu": true,
+  "enable_tpu": false,
+  "enable_internet": true,
+  "keywords": [
+    "gpu"
+  ],
+  "dataset_sources": [
+    "ttgrcgrc/max20-frozen-checkpoint-neural-debris"
+  ],
+  "kernel_sources": [
+    "ttgrcgrc/max20-raw-cluster226-recon-script-001",
+    "ttgrcgrc/checkpoint-interpolation-around-max20-001",
+    "ttgrcgrc/checkpoint-interpolation-beta005-neighborhood-001",
+    "ttgrcgrc/micro-grid-beta005-plus-001"
+  ],
+  "competition_sources": [
+    "neural-debris-removal-in-streak-detection-models"
+  ],
+  "model_sources": [],
+  "docker_image": "gcr.io/kaggle-private-byod/python@sha256:57e612b484cf3df5026ee4dcc3cb176974b22b2bc0937fb1e16132a8be4cb13c",
+  "machine_shape": "NvidiaTeslaT4"
+}
