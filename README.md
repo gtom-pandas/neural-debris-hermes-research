@@ -12,6 +12,7 @@ state before any leaderboard action.
 
 - Competition slug: `neural-debris-removal-in-streak-detection-models`
 - Project slug: `neural_debris`
+- GitHub repo: `https://github.com/gtom-pandas/neural-debris-hermes-research`
 - Workspace VPS: `/opt/kaggle/neural_debris`
 - Hermes profile: `kaggle_neural_debris`
 - Metric: `Confidence-Aware Detection Distance` lower is better

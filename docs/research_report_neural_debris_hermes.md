@@ -127,8 +127,9 @@ agent as a research collaborator:
 
 ## Next Steps
 
-1. Create a clean GitHub repository from this workspace.
-2. Add this report to the portfolio project modal/card.
+1. Keep the GitHub repository synchronized with sanitized reports and no-submit
+   artifacts.
+2. Keep the portfolio modal/card linked to the repo and research report.
 3. Re-run the current best path in no-submit mode with artifact-level audits.
 4. Write a submit-review dossier only if the candidate passes format, stability
    and novelty checks.
