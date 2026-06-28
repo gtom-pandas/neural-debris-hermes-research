@@ -8,6 +8,24 @@ VPS, controlled from WhatsApp, used to audit a poisoned RetinaNet-style streak
 detector, prepare no-submit experiments, and keep a machine-readable research
 state before any leaderboard action.
 
+## What This Repo Shows
+
+This is a competition research repo, not a raw artifact dump. It captures both
+the **model-repair strategy** and the **agentic operating system** around it.
+
+Technical focus:
+
+- **Poisoned detector repair** for a RetinaNet/Detectron2-style streak detector.
+- **Controlled unlearning**: suppress suspected poison/debris detections while
+  preserving useful non-poison detection confidence.
+- **Preserve losses** and conservative checkpoint interpolation to avoid
+  destroying the original detector behavior.
+- **Threshold and geometry audits** around confidence calibration, bounding-box
+  formatting and Kaggle submission contract.
+- **No-submit reproductions** of public hypotheses before any leaderboard risk.
+- **Agentic research ops**: Codex desktop, Hermes on VPS, Kaggle CLI, WhatsApp
+  control surface, Markdown knowledge files and JSON runtime state.
+
 ## Snapshot
 
 - Competition slug: `neural-debris-removal-in-streak-detection-models`
@@ -50,10 +68,52 @@ overfitting blindly to the public leaderboard. The workflow prioritizes:
 - [reports/](reports/): audits, training plans and no-submit conclusions.
 - [handoffs/](handoffs/): prompts/runbooks for Codex, Hermes and phone-based
   operation.
+- [scripts/train.py](scripts/train.py): reference controlled-unlearning trainer
+  for a confidence repair head over exported detection features.
+- [scripts/infer.py](scripts/infer.py): conservative inference/post-processing
+  script that applies repair checkpoints and writes a Kaggle-style submission.
 - [kaggle_kernels/neural_debris/](kaggle_kernels/neural_debris/): Kaggle CLI
   exports of the competition kernels and metadata.
 - [controlled_unlearn_beta005_preserve_001.ipynb](controlled_unlearn_beta005_preserve_001.ipynb):
   prepared no-submit notebook candidate.
+
+## Scripted Pipeline
+
+The full detector checkpoints and Kaggle datasets are not committed. The scripts
+document the reproducible layer that can be run after exporting detection-level
+features from a notebook or VPS job.
+
+Train a confidence repair head:
+
+```bash
+python scripts/train.py \
+  --features artifacts/neural_debris_detection_features.npz \
+  --output-dir artifacts/confidence_repair \
+  --poison-weight 0.05 \
+  --preserve-weight 0.01
+```
+
+Run guarded inference/post-processing:
+
+```bash
+python scripts/infer.py \
+  --detections artifacts/candidate_detections.csv \
+  --features artifacts/neural_debris_test_features.npz \
+  --checkpoint artifacts/confidence_repair/confidence_repair_fold1.pt \
+  --checkpoint artifacts/confidence_repair/confidence_repair_fold2.pt \
+  --threshold 0.22 \
+  --output submission.csv
+```
+
+Feature contract for `scripts/train.py`:
+
+- `features`: detection-level model/box/context features
+- `poison`: binary mask for detections to suppress
+- `keep`: binary mask for detections that should preserve original behavior
+- `teacher`: original detector confidence used for distillation/calibration
+
+This keeps the portfolio repo reviewable while avoiding secret exposure, dataset
+bloat and accidental leaderboard submissions.
 
 ## Safety Policy
 
