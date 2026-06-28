@@ -3,10 +3,10 @@
 Research workspace for the Kaggle competition
 [Neural Debris Removal in Streak Detection Models](https://www.kaggle.com/competitions/neural-debris-removal-in-streak-detection-models).
 
-This repository documents an agentic Kaggle workflow: a Codex/Hermes agent on a
-VPS, controlled from WhatsApp, used to audit a poisoned RetinaNet-style streak
-detector, prepare no-submit experiments, and keep a machine-readable research
-state before any leaderboard action.
+This repository documents an agentic Kaggle workflow used to audit and repair a
+poisoned RetinaNet-style streak detector. The public repo is intentionally
+compact: raw Kaggle kernels, handoff prompts, runtime state files and VPS logs
+were removed so the solution is easier to read.
 
 ## What This Repo Shows
 
@@ -23,8 +23,8 @@ Technical focus:
 - **Threshold and geometry audits** around confidence calibration, bounding-box
   formatting and Kaggle submission contract.
 - **No-submit reproductions** of public hypotheses before any leaderboard risk.
-- **Agentic research ops**: Codex desktop, Hermes on VPS, Kaggle CLI, WhatsApp
-  control surface, Markdown knowledge files and JSON runtime state.
+- **Agentic research ops**: Codex desktop, Hermes on VPS, Kaggle CLI and
+  WhatsApp supervision, summarized here without exposing operational clutter.
 
 ## Snapshot
 
@@ -56,26 +56,16 @@ overfitting blindly to the public leaderboard. The workflow prioritizes:
 
 ## Repository Map
 
-- [AGENTS.md](AGENTS.md): operating contract for Codex/Hermes.
 - [docs/research_report_neural_debris_hermes.md](docs/research_report_neural_debris_hermes.md):
   portfolio-ready research report.
+- [docs/experiment_timeline.md](docs/experiment_timeline.md): concise synthesis
+  of the removed reports, kernels and handoff docs.
 - [docs/portfolio_project_card.md](docs/portfolio_project_card.md): short
   project text for a portfolio modal/card.
-- [knowledge/project_state.md](knowledge/project_state.md): human-readable
-  strategic state.
-- [state/runtime_state.json](state/runtime_state.json): machine-readable
-  operational state for the agent.
-- [reports/](reports/): audits, training plans and no-submit conclusions.
-- [handoffs/](handoffs/): prompts/runbooks for Codex, Hermes and phone-based
-  operation.
 - [scripts/train.py](scripts/train.py): reference controlled-unlearning trainer
   for a confidence repair head over exported detection features.
 - [scripts/infer.py](scripts/infer.py): conservative inference/post-processing
   script that applies repair checkpoints and writes a Kaggle-style submission.
-- [kaggle_kernels/neural_debris/](kaggle_kernels/neural_debris/): Kaggle CLI
-  exports of the competition kernels and metadata.
-- [controlled_unlearn_beta005_preserve_001.ipynb](controlled_unlearn_beta005_preserve_001.ipynb):
-  prepared no-submit notebook candidate.
 
 ## Scripted Pipeline
 
@@ -127,7 +117,7 @@ bloat and accidental leaderboard submissions.
 
 ## Portfolio Angle
 
-This is not only a Kaggle notebook repo. It is a case study in operating an AI
-research agent responsibly: state files, guardrails, cost gates, external
-notebook assimilation, leaderboard pressure, and reproducible handoffs between
+This is not a Kaggle notebook dump. It is a case study in operating an AI
+research agent responsibly: guardrails, cost gates, external notebook
+assimilation, leaderboard pressure and reproducible decision-making between
 desktop Codex, a VPS Hermes agent and phone-based supervision.
