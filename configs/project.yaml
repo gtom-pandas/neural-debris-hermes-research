@@ -1,0 +1,20 @@
+project:
+  name: neural_debris
+  competition_slug: neural-debris-removal-in-streak-detection-models
+  local_root: C:\Users\graci\neural
+  vps_root: /opt/kaggle/neural_debris
+
+runtime:
+  paused: true
+  auto_submit: false
+  paid_gpu_allowed: false
+  submission_requires_human_approval: true
+
+hermes:
+  profile: kaggle_neural_debris
+  provider: openai-codex
+  model: gpt-5.5
+  terminal_cwd: /opt/kaggle/neural_debris
+  whatsapp_mode: separate_bot_number
+  whatsapp_allowed_user: PENDING_INTERNATIONAL_NUMBER
+
