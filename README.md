@@ -1,123 +1,97 @@
-# Neural Debris Hermes Research
+# Targeted Model Repair - Neural Debris
 
-Research workspace for the Kaggle competition
+This repository accompanies my study of the Kaggle competition
 [Neural Debris Removal in Streak Detection Models](https://www.kaggle.com/competitions/neural-debris-removal-in-streak-detection-models).
+It documents the repair of a poisoned RetinaNet detector when the clean model
+and test labels are hidden.
 
-This repository documents an agentic Kaggle workflow used to audit and repair a
-poisoned RetinaNet-style streak detector. The public repo is intentionally
-compact: raw Kaggle kernels, handoff prompts, runtime state files and VPS logs
-were removed so the solution is easier to read.
+**Best public maCADD:** 219.4257<br>
+**Best private maCADD:** 306.3502<br>
+**Final rank:** 89 / 567 teams
 
-## What This Repo Shows
+Lower maCADD is better. The public-best candidate scored 308.0971 privately;
+the best private result came from a pruning plus short EWC fine-tune.
 
-This is a competition research repo, not a raw artifact dump. It captures both
-the **model-repair strategy** and the **agentic operating system** around it.
+## Research trajectory
 
-Technical focus:
+```text
+aggressive suppression (449.95)
+          |
+short empty-label fine-tuning (259.79)
+          |
+preservation losses and interpolation (257.12)
+          |
+pruning / EWC reproductions (245.30)
+          |
+Sanidhya Phase B (229.19 public, 306.35 private)
+          |
+metric-aware confidence selection (219.43 public, 308.10 private)
+```
 
-- **Poisoned detector repair** for a RetinaNet/Detectron2-style streak detector.
-- **Controlled unlearning**: suppress suspected poison/debris detections while
-  preserving useful non-poison detection confidence.
-- **Preserve losses** and conservative checkpoint interpolation to avoid
-  destroying the original detector behavior.
-- **Threshold and geometry audits** around confidence calibration, bounding-box
-  formatting and Kaggle submission contract.
-- **No-submit reproductions** of public hypotheses before any leaderboard risk.
-- **Agentic research ops**: Codex desktop, Hermes on VPS, Kaggle CLI and
-  WhatsApp supervision, summarized here without exposing operational clutter.
+The central lesson is that suppression alone causes collateral damage. Reliable
+repair needs a frozen teacher, dense preservation of non-poison anchors and box
+deltas, a poison mask aligned with RetinaNet anchors, and synthetic validation
+that measures both forgetting and clean-streak retention.
 
-## Snapshot
+## Files
 
-- Competition slug: `neural-debris-removal-in-streak-detection-models`
-- Project slug: `neural_debris`
-- GitHub repo: `https://github.com/gtom-pandas/neural-debris-hermes-research`
-- Workspace VPS: `/opt/kaggle/neural_debris`
-- Hermes profile: `kaggle_neural_debris`
-- Metric: `Confidence-Aware Detection Distance` lower is better
-- Deadline observed by Kaggle CLI: `2026-07-23 12:00 UTC`
-- Daily submission quota: `2`
+- `paper/neural_debris_technical_report.pdf` is the ORCID-linked research paper.
+- `train.py` trains the released detection-level confidence repair head.
+- `infer.py` ensembles repair checkpoints and writes a contract-checked Kaggle submission.
+- `SOURCES.md` records the competition, research references and external solutions.
+- `CITATION.cff` provides citation metadata.
+- `tests/` contains focused contract and regression tests.
 
-Latest read-only check in this repo, `2026-06-28`:
+## Training
 
-- Best account submission observed: `245.3014` on `2026-06-23`
-- Latest account submission observed: `248.5938` on `2026-06-28`
-- Public leaderboard #1 observed: `149.9006` on `2026-06-28`
-- Current gap from best account submission to public #1: about `95.40`
+`train.py` expects an NPZ file with aligned detection-level arrays:
 
-## Research Goal
-
-The challenge is to repair or depoison a streak detection model without
-overfitting blindly to the public leaderboard. The workflow prioritizes:
-
-1. contract audits of data, model checkpoint and submission format;
-2. exact no-submit reproductions of strong public hypotheses;
-3. conservative safety gates around submissions and paid compute;
-4. written experiment logs that make each agent decision reviewable.
-
-## Repository Map
-
-- [docs/research_report_neural_debris_hermes.md](docs/research_report_neural_debris_hermes.md):
-  portfolio-ready research report.
-- [docs/experiment_timeline.md](docs/experiment_timeline.md): concise synthesis
-  of the removed reports, kernels and handoff docs.
-- [docs/portfolio_project_card.md](docs/portfolio_project_card.md): short
-  project text for a portfolio modal/card.
-- [scripts/train.py](scripts/train.py): reference controlled-unlearning trainer
-  for a confidence repair head over exported detection features.
-- [scripts/infer.py](scripts/infer.py): conservative inference/post-processing
-  script that applies repair checkpoints and writes a Kaggle-style submission.
-
-## Scripted Pipeline
-
-The full detector checkpoints and Kaggle datasets are not committed. The scripts
-document the reproducible layer that can be run after exporting detection-level
-features from a notebook or VPS job.
-
-Train a confidence repair head:
+- `features`: float matrix `[n_detections, n_features]`;
+- `poison`: binary suppression mask;
+- `keep`: binary preservation mask;
+- `teacher`: original detector confidence in `[0, 1]`.
 
 ```bash
-python scripts/train.py \
+python train.py \
   --features artifacts/neural_debris_detection_features.npz \
   --output-dir artifacts/confidence_repair \
   --poison-weight 0.05 \
   --preserve-weight 0.01
 ```
 
-Run guarded inference/post-processing:
+## Inference
+
+Candidate detections must contain `image_id`, `confidence`, `x`, `y`, `width`
+and `height`. The official sample submission is required so image order and
+empty prediction rows are preserved.
 
 ```bash
-python scripts/infer.py \
+python infer.py \
   --detections artifacts/candidate_detections.csv \
   --features artifacts/neural_debris_test_features.npz \
   --checkpoint artifacts/confidence_repair/confidence_repair_fold1.pt \
   --checkpoint artifacts/confidence_repair/confidence_repair_fold2.pt \
+  --sample-submission /kaggle/input/neural-debris-removal-in-streak-detection-models/sample_submission.csv \
   --threshold 0.22 \
   --output submission.csv
 ```
 
-Feature contract for `scripts/train.py`:
+## Reproducibility boundary
 
-- `features`: detection-level model/box/context features
-- `poison`: binary mask for detections to suppress
-- `keep`: binary mask for detections that should preserve original behavior
-- `teacher`: original detector confidence used for distillation/calibration
+The paper reconstructs the full 40-kernel, 19-submission research trajectory.
+The public code is the compact detection-level repair component that can be
+released and tested without redistributing the competition images, poisoned
+checkpoint, private notebook caches or generated submissions. It is not a claim
+that these two scripts alone reproduce the final leaderboard entry.
 
-This keeps the portfolio repo reviewable while avoiding secret exposure, dataset
-bloat and accidental leaderboard submissions.
+## Tests
 
-## Safety Policy
+```bash
+python -m pytest -q
+python -m py_compile train.py infer.py
+```
 
-- Kaggle reads, audits and no-submit preparation are allowed.
-- Leaderboard submissions require explicit human approval with CSV path and
-  hash.
-- Paid GPU, dataset publication, notebook publication, destructive VPS changes
-  and secret exposure are blocked unless explicitly approved.
-- Secrets, datasets, submissions and generated artifacts are intentionally
-  ignored by Git.
+## Citation
 
-## Portfolio Angle
-
-This is not a Kaggle notebook dump. It is a case study in operating an AI
-research agent responsibly: guardrails, cost gates, external notebook
-assimilation, leaderboard pressure and reproducible decision-making between
-desktop Codex, a VPS Hermes agent and phone-based supervision.
+If this work is useful, cite the technical report using `CITATION.cff` and retain
+the upstream credits listed in `SOURCES.md`.

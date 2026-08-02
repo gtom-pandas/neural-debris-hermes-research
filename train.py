@@ -12,8 +12,8 @@ Expected NPZ arrays:
   teacher:  float32 [n_detections] original detector confidence
 
 The loss combines poison suppression and preserve distillation. It is a small,
-auditable proxy for the larger RetinaNet/Detectron2 repair notebooks stored
-under kaggle_kernels/neural_debris/.
+auditable release of the detection-level repair stage; it does not redistribute
+the competition data, RetinaNet checkpoint, or private Kaggle notebook caches.
 """
 
 from __future__ import annotations
@@ -25,7 +25,6 @@ from pathlib import Path
 
 import numpy as np
 import torch
-from sklearn.model_selection import StratifiedKFold
 from torch import nn
 from torch.utils.data import DataLoader, TensorDataset
 
@@ -67,14 +66,47 @@ def set_seed(seed: int) -> None:
     torch.cuda.manual_seed_all(seed)
 
 
+def stratified_folds(labels: np.ndarray, n_splits: int, seed: int):
+    """Yield deterministic stratified train/validation indices without sklearn."""
+    labels = np.asarray(labels)
+    _, class_counts = np.unique(labels, return_counts=True)
+    if n_splits < 2 or n_splits > int(class_counts.min()):
+        raise ValueError("folds must be at least 2 and no larger than the smallest stratification class")
+
+    rng = np.random.default_rng(seed)
+    validation_parts: list[list[np.ndarray]] = [[] for _ in range(n_splits)]
+    for label in np.unique(labels):
+        indices = np.flatnonzero(labels == label)
+        rng.shuffle(indices)
+        for fold, chunk in enumerate(np.array_split(indices, n_splits)):
+            validation_parts[fold].append(chunk)
+
+    all_indices = np.arange(len(labels))
+    for parts in validation_parts:
+        valid_idx = np.sort(np.concatenate(parts))
+        train_idx = np.setdiff1d(all_indices, valid_idx, assume_unique=True)
+        yield train_idx, valid_idx
+
+
 def load_features(path: Path) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
-    payload = np.load(path, allow_pickle=True)
+    payload = np.load(path, allow_pickle=False)
+    required = {"features", "poison", "keep", "teacher"}
+    missing = required.difference(payload.files)
+    if missing:
+        raise ValueError(f"Missing NPZ arrays: {sorted(missing)}")
     features = payload["features"].astype("float32")
     poison = payload["poison"].astype("float32")
     keep = payload["keep"].astype("float32")
     teacher = payload["teacher"].astype("float32")
     if features.ndim != 2:
         raise ValueError(f"features must be 2D, got {features.shape}")
+    n_rows = len(features)
+    if any(array.ndim != 1 or len(array) != n_rows for array in (poison, keep, teacher)):
+        raise ValueError("poison, keep, and teacher must be aligned 1D arrays")
+    if not all(np.isfinite(array).all() for array in (features, poison, keep, teacher)):
+        raise ValueError("feature payload contains non-finite values")
+    if ((teacher < 0) | (teacher > 1)).any():
+        raise ValueError("teacher confidence must be between 0 and 1")
     return features, poison, keep, teacher
 
 
@@ -89,9 +121,12 @@ def repair_loss(
     target = torch.clamp(teacher, 0.0, 1.0)
     probs = torch.sigmoid(logits)
 
-    suppress = (probs * poison).mean()
+    poison_mask = torch.clamp(poison, 0.0, 1.0)
+    non_poison = 1.0 - poison_mask
+    suppress = (probs * poison_mask).sum() / torch.clamp(poison_mask.sum(), min=1.0)
     preserve = ((probs - target).pow(2) * keep).sum() / torch.clamp(keep.sum(), min=1.0)
-    calibration = nn.functional.binary_cross_entropy_with_logits(logits, target)
+    calibration_per_detection = nn.functional.binary_cross_entropy_with_logits(logits, target, reduction="none")
+    calibration = (calibration_per_detection * non_poison).sum() / torch.clamp(non_poison.sum(), min=1.0)
     return calibration + poison_weight * suppress + preserve_weight * preserve
 
 
@@ -115,7 +150,8 @@ def run_fold(
         torch.from_numpy(keep[train_idx]),
         torch.from_numpy(teacher[train_idx]),
     )
-    loader = DataLoader(dataset, batch_size=cfg.batch_size, shuffle=True)
+    generator = torch.Generator().manual_seed(cfg.seed + fold)
+    loader = DataLoader(dataset, batch_size=cfg.batch_size, shuffle=True, generator=generator)
 
     valid_x = torch.from_numpy(features[valid_idx]).to(device)
     valid_poison = torch.from_numpy(poison[valid_idx]).to(device)
@@ -213,9 +249,8 @@ def main() -> None:
     features, poison, keep, teacher = load_features(Path(cfg.features))
 
     stratify = np.clip(poison.astype(int) + keep.astype(int), 0, 2)
-    splitter = StratifiedKFold(n_splits=cfg.folds, shuffle=True, random_state=cfg.seed)
     metrics = []
-    for fold, (train_idx, valid_idx) in enumerate(splitter.split(features, stratify), start=1):
+    for fold, (train_idx, valid_idx) in enumerate(stratified_folds(stratify, cfg.folds, cfg.seed), start=1):
         metrics.append(run_fold(features, poison, keep, teacher, train_idx, valid_idx, cfg, fold))
 
     output_dir = Path(cfg.output_dir)

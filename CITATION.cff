@@ -1,0 +1,18 @@
+cff-version: 1.2.0
+message: "If you use this work, please cite the technical report and retain the upstream credits in SOURCES.md."
+title: "Targeted Model Repair under a Hidden Clean Teacher"
+type: software
+authors:
+  - family-names: Graci
+    given-names: Tom
+    orcid: "https://orcid.org/0009-0000-0448-4012"
+repository-code: "https://github.com/gtom-pandas/neural-debris-hermes-research"
+url: "https://www.kaggle.com/competitions/neural-debris-removal-in-streak-detection-models"
+date-released: 2026-08-02
+version: "1.0.0"
+keywords:
+  - machine unlearning
+  - backdoor removal
+  - object detection
+  - RetinaNet
+  - Kaggle
