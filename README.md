@@ -35,7 +35,7 @@ that measures both forgetting and clean-streak retention.
 
 ## Files
 
-- `paper/neural_debris_technical_report.pdf` is the ORCID-linked research paper.
+- `paper/neural_debris_technical_report.pdf` is the 13-page ORCID-linked research paper. It includes exact EDA, the reconstructed ResNet-50-FPN RetinaNet architecture, the complete pruning/EWC/inference stack, hyperparameter failures, output-level ablations and leaderboard forensics.
 - `train.py` trains the released detection-level confidence repair head.
 - `infer.py` ensembles repair checkpoints and writes a contract-checked Kaggle submission.
 - `SOURCES.md` records the competition, research references and external solutions.
@@ -79,6 +79,10 @@ python infer.py \
 ## Reproducibility boundary
 
 The paper reconstructs the full 40-kernel, 19-submission research trajectory.
+Its claims distinguish scored runs, audited no-submit experiments and explicitly
+labeled retrospective inference. In particular, the 219.4257 public-best entry
+is documented as a fixed 450-detection mask, not as a trained-model improvement;
+the 306.3502 private Phase B run is the strongest model-based result.
 The public code is the compact detection-level repair component that can be
 released and tested without redistributing the competition images, poisoned
 checkpoint, private notebook caches or generated submissions. It is not a claim
